@@ -227,6 +227,31 @@ python run_localGPT.py --save_qa
 10. Open up a web browser and go the address `http://localhost:5111/`.
 
 
+# Or, Run the Graphical Chat Interface
+
+1. Open `constants.py` in an editor of your choice and depending on choice add the LLM you want to use. By default, the following model will be used:
+
+   ```shell
+   MODEL_ID = "TheBloke/Llama-2-7b-Chat-GGUF"
+   MODEL_BASENAME = "llama-2-7b-chat.Q4_K_M.gguf"
+   ```
+
+3. Open up a terminal and activate your python environment that contains the dependencies installed from requirements.txt.
+
+4. Navigate to the `/LOCALGPT` directory.
+
+5. Run the following command `python run_localGPT_API.py`. The API should being to run.
+
+6. Wait until everything has loaded in. You should see something like `INFO:werkzeug:Press CTRL+C to quit`.
+
+7. Open up a second terminal and activate the same python environment.
+
+8. Navigate to the `/LOCALGPT/localGPTChat` directory.
+
+9. Run the command `python localGPTChat.py`.
+
+10. Open up a web browser and go the address `http://localhost:5111/`.
+
 # How to select different LLM models?
 
 To change the models you will need to set both `MODEL_ID` and `MODEL_BASENAME`.
