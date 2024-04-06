@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- <script src="{{url_for('static', filename='./js/socketmessage.js')}}"></script> -->
+    <script src="{{url_for('static', filename='./js/socket.io.js')}}"></script>
+    <link href="{{url_for('static', filename='./css/bootstrap.min.css')}}" rel="stylesheet"></link>
+    <style>
+        body {
+            background-color: #ffffff;
+        }
+
+        .chat-window {
+            min-width: 75vh;
+            min-height: 98vh;
+            max-height: 98vh;
+            margin: 8px;
+        }
+        .in-text {
+            color: #085ed7;
+            font-weight: bold;
+        }
+        .out-text {
+            color: #2f2f2f;
+        }
+        .sys-text {
+            color: #6f6f6f;
+            font-weight: normal;
+            font-style: italic;
+        }
+        .time-text {
+            color: #6f6f6f;
+            font-size: 10px;
+            font-weight: normal;
+        }
+        .highlight-text {
+            color: #6f6f6f;
+            
+            font-weight: bold;
+            font-style: normal;
+        }
+        .messages {
+            background-color: #fafafa;
+            overflow-y: scroll;
+            scroll-behavior: auto;
+        }
+
+        .border-red {
+            border-style: solid;
+            border-width: 2px;
+            border-color: #ff0000;
+        }
+
+        .border-green {
+            border-style: solid;
+            border-width: 2px;
+            border-color: #00ff00;
+        }
+
+        .border-blue {
+            border-style: solid;
+            border-width: 2px;
+            border-color: #0000ff;
+        }
+    </style>
+    <title>LocalGPT Chat</title>
+</head>
+
+<body>
+    <div class="container-fluid h-100 d-flex flex-column ">
+        <div class="row">
+            <div class="col-sm-8 h-100">
+                <div class="card chat-window h-100">
+                    <div class="card-header">
+                        LocalGPT Chat
+                    </div>
+                    <div class="card-body overflow-auto messages">
+                    </div>
+                    <footer class="footer">
+                        <div class="input-group mb-0">
+                            <span class="input-group-text" id="basic-addon1">Message:</span>
+                            <input type="text" class="form-control" id="messageInput" placeholder="type your message"
+                                aria-label="Message" aria-describedby="basic-addon1">
+                        </div>
+                    </footer>
+                </div>
+            </div>
+            <div class="col-sm-4 h-100">
+                <div class="card m-3">
+                    <div class="card-header">
+                        Upload Custom Data
+                    </div>
+                    <div class="card-body">
+                        <div class="btn-group w-100" role="group">
+                            <form id="uploadForm" name="upload_files" action="{{ url_for('home_page') }}" method="POST"
+                                enctype="multipart/form-data"></form>
+                            <input type="file" class="form-control" name="documents" id="fileInput" accept=".csv, .pdf, .txt, .docx" multiple>
+                            <button for="fileInputAdd" type="button" id="submitFilesButton" class="btn btn-primary"
+                                onclick="submitForm('add')">Add</button>
+                                <button for="fileInputReset" type="button" id="submitFilesButton" class="btn btn-primary"
+                                onclick="submitForm('reset')">Reset</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const socket = io();
+
+        let messageContainer = document.querySelector(".messages");
+        let echo = "";
+
+        function systemChatMessage(text) {
+            let dt = new Date(Date.now())
+            let p = document.createElement("p")
+            p.classList.add('sys-text')
+            p.innerHTML = `<span class="time-text">${dt.toLocaleTimeString()}></span>${text}`
+            messageContainer.appendChild(p)
+        }      
+        socket.on("connect", () => {
+            systemChatMessage("You're connected. Use input below to chat with the model.")
+        })
+        socket.on('message', (message) => {
+            let dt = new Date(Date.now())
+            let msg = `<span class="time-text">${dt.toLocaleTimeString()}></span>  ${message.Answer}`
+                let messageElement = document.createElement("div")
+                messageElement.classList.add('in-text')
+                messageElement.innerHTML = msg
+                messageContainer.appendChild(messageElement)
+        })
+        function submitForm(action) {
+            if (action == 'reset') {
+                systemChatMessage('Submitting and resetting context...')
+            } else {
+                systemChatMessage('Submitting and adding files to context...')
+            }
+            var form = document.getElementById("uploadForm");
+            var files = document.getElementById("fileInput");
+            if (files.value != '') {
+                form.appendChild(files);
+            }
+            var input = document.createElement("input");
+            input.type = "hidden";
+            input.name = "action";
+            input.value = action;
+            form.appendChild(input);
+            form.submit();
+        }
+        function voiceAlert(text) {
+            let useVoice = document.getElementById("voiceSynthCheck");
+            if (useVoice.checked == true) {
+                let utterance = new SpeechSynthesisUtterance();
+                utterance.text = text;
+                utterance.voice = window.speechSynthesis.getVoices()[0];
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+        
+        let messageInput = document.getElementById("messageInput")
+        messageInput.addEventListener("keypress", (e) => {
+            if (e.which === 13) {
+                let dt = new Date(Date.now())
+                let msg = `<span class="time-text">${dt.toLocaleTimeString()}></span>  ${messageInput.value}`
+                let messageElement = document.createElement("div")
+                messageElement.classList.add('out-text')
+                messageElement.innerHTML = msg
+                messageContainer.appendChild(messageElement)
+
+                socket.emit("message", messageInput.value)
+                messageInput.value = ""
+            }
+        })
+    </script>
+</body>
+
+</html>
